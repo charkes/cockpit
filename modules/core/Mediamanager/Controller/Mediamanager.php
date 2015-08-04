@@ -104,8 +104,45 @@ class Mediamanager extends \Cockpit\Controller {
 
                 // clean filename
                 $clean = preg_replace('/[^a-zA-Z0-9-_\.]/','', str_replace(' ', '-', $files['name'][$i]));
+                $savepath = $targetpath.'/'.$clean;
 
-                if (!$files['error'][$i] && move_uploaded_file($files['tmp_name'][$i], $targetpath.'/'.$clean)) {
+                if (!$files['error'][$i] && move_uploaded_file($files['tmp_name'][$i], $savepath)) {
+                    if (function_exists('exif_imagetype') && @exif_imagetype($savepath) !== false) {
+                        $exif = function_exists('exif_read_data') ? @exif_read_data($savepath) : [];
+
+                        if (isset($exif['Orientation'])) {
+                            if ($exif['Orientation'] >= 2 && $exif['Orientation'] <= 8) {
+                                $img = $this("image")->take($savepath);
+
+                                switch ($exif['Orientation']) {
+                                    case 2:
+                                        $img->flipHorizontally();
+                                        break;
+                                    case 3:
+                                        $img->rotate(-180);
+                                        break;
+                                    case 4:
+                                        $img->flipVertically();
+                                        break;
+                                    case 5:
+                                        $img->flipVertically()->rotate(90);
+                                        break;
+                                    case 6:
+                                        $img->rotate(90);
+                                        break;
+                                    case 7:
+                                        $img->flipHorizontally()->rotate(90);
+                                        break;
+                                    case 8:
+                                        $img->rotate(-90);
+                                        break;
+                                }
+
+                                $img->save($savepath, 100);
+                            }
+                        }
+                    }
+
                     $uploaded[] = $files['name'][$i];
                 } else {
                     $failed[] = $files['name'][$i];
