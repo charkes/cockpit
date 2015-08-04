@@ -1221,7 +1221,7 @@ class App implements \ArrayAccess {
                 // load modules
                 foreach (new \DirectoryIterator($dir) as $module) {
 
-                    if($module->isFile() || $module->isDot()) continue;
+                    if($module->isFile() || $module->isDot() || strpos($module->getBaseName(), ".") === 0) continue;
 
                     $this->registerModule($module->getBasename(), $module->getRealPath());
 
